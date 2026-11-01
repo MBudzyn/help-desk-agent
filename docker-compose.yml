@@ -10,12 +10,10 @@ services:
 
   test:
     image: citywheels-help-desk:local
-    build: .
     entrypoint: ["pytest"]
 
   eval:
     image: citywheels-help-desk:local
-    build: .
     env_file:
       - path: .env
         required: false
