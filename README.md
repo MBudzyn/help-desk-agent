@@ -1,6 +1,8 @@
-# CityWheels help desk — base data
+# CityWheels help desk
 
-CityWheels is a made-up bike rental shop. These files hold the data for its help desk agent. There is no code here: you write it.
+How to build, run, test, and evaluate the agent is in [SOLUTION.md](SOLUTION.md).
+
+The shop data and the fixed clock are below.
 
 ## Files
 

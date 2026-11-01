@@ -1,8 +1,14 @@
 # Solution
 
-## How to install and run
+## Setup
 
-The agent, the tests, and the evaluation run from one Docker image, `citywheels-help-desk:local`. Only the `agent` service builds it. `test` and `eval` reuse that image.
+### Why Docker
+
+The project runs in Docker so the same build works on a Windows machine and in GitHub Actions. The image is Python 3.12. Tests do not depend on a virtual environment installed on the host, and the host clock is never the shop clock.
+
+One image, `citywheels-help-desk:local`, serves the agent, the tests, and the evaluation. Only the `agent` service builds it. `test` and `eval` reuse the tag. Building all three services at once used to fail, because they tried to publish the same tag in parallel.
+
+### Commands
 
 ```bash
 docker compose build
@@ -11,27 +17,49 @@ docker compose run --rm test
 docker compose run --rm eval
 ```
 
-`docker compose build` is required after a change under `src/`, because the image copies the source before it installs the package. Paths passed to `pytest` inside the container use forward slashes, for example `tests/tools/test_policies.py`.
+`docker compose build` is required after a change under `src/`. The Dockerfile copies the source before it installs the package, so a source change rebuilds that layer. Paths passed to `pytest` inside the container use forward slashes, for example `tests/tools/test_policies.py`.
 
 `test` runs `pytest` with no network and no API key. `eval` reads `GOOGLE_API_KEY` and `MODEL_NAME` from `.env`. Copy `.env.example` to `.env` and fill in the values before that run. The real key stays out of git.
 
-The evaluation calls the free tier, which allows 15 requests a minute for this model. The script waits 10 seconds between questions and, on HTTP 429, waits 65 seconds and tries the same question again. A full run takes a few minutes. `eval/results.md` is the file it overwrites.
+The evaluation calls the free tier, which allows 15 requests a minute for this model. The script waits 10 seconds between questions and, on HTTP 429, waits 65 seconds and tries the same question again. A full run takes a few minutes. It overwrites `eval/results.md`.
+
+### Continuous checks
+
+GitHub Actions runs `docker compose build` and `docker compose run --rm -T test` on every push and pull request. The workflow is `.github/workflows/tests.yml`. It does not call the model and does not need the API key.
+
+### Layout
+
+```text
+src/main.py                 command-line entrypoint
+src/config.py               data paths and the fixed shop clock
+src/agent/graph.py          the tool-calling loop
+src/agent/prompts.py        instructions for the model
+src/agent/tools.py          wrappers the model is allowed to call
+src/agent/evaluate.py       scores a run and writes eval/results.md
+src/tools/                  booking lookup, policy search, refund math
+data/policies/              shop rules
+data/bookings.json          example bookings
+tests/                      offline pytest suite
+eval/questions.json         questions and expected outcomes
+eval/run_eval.py            live evaluation entrypoint
+eval/results.md             last evaluation run
+```
 
 ## How I wrote the code
 
-Each slice started from `main` on a short-lived branch and was merged back before the next one. A slice was one tool, the agent loop, the CLI, or the evaluation. I did not build the whole agent in one change.
+Each slice started from `main` on a short-lived branch and was merged back before the next one. A slice was one tool, the agent loop, the CLI, or the evaluation.
 
-The usual shape was two commits. The first adds tests that fail because the behaviour is not there yet. The second makes those tests pass. Messages are in English and say why the change exists. Refund tests name the 24-hour and 48-hour boundaries, the kept booking fee, vouchers, and the statuses that cannot be cancelled. The loop tests name the fixed clock and the cutoff. Implementation commits say what the code now guarantees, for example that the refund is computed in Python from the booking and the shop clock.
+The usual shape was two commits. The first adds tests that fail because the behaviour is not there yet. The second makes those tests pass. Messages are in English and say why the change exists. Refund tests name the 24-hour and 48-hour boundaries, the kept booking fee, vouchers, card refunds, and the statuses that cannot be cancelled. The loop tests name the fixed clock and the cutoff.
 
-`pytest` never calls Gemini. Tool tests use the files in `data/` and, for broken input, `tmp_path`. The loop test injects a scripted model. The evaluation scorer is tested the same way: a prepared answer goes in, and the pass or fail comes from the checker. The live model is only the `eval` service.
+`pytest` never calls Gemini. Tool tests use the files in `data/` and, for broken input, `tmp_path`. The loop test injects a scripted model. The evaluation scorer is tested the same way. The live model is only the `eval` service.
 
-The order of the branches was the order of the assignment. A hello-world CLI made the container start. One shared image stopped the three Compose services from tagging the same image at once. Then `get_booking`, `search_policies`, and `calculate_refund`. Then one tool-calling loop. Then the CLI was wired to that loop. Then the 12-question evaluation. This document is the last slice.
+The order was a hello-world CLI, then one shared image, then `get_booking`, `search_policies`, and `calculate_refund`, then one tool-calling loop, then the real CLI, then the 12-question evaluation, then this document and the GitHub Actions workflow.
 
 ## Model and provider
 
 The provider is Google Gemini through the LangChain Google GenAI chat model. LangGraph runs the loop. The model name is `gemini-3.5-flash-lite`, set in `.env` as `MODEL_NAME`.
 
-I tried `gemini-2.5-flash` first. The API told new users that model is gone. `gemini-3.8-flash` is the current Flash, and a call to it sat on an open connection and then returned 503 because of demand. Listing the models this key can call, and sending one short prompt to a few Flash-Lite names, showed that `gemini-3.5-flash-lite` answers in a few seconds. It is a free-tier model, which is enough for a help desk that only has to pick a tool and quote the result. The library is created with `max_retries=0`, so a rate-limit error reaches the evaluation script instead of being retried in a tight loop.
+I tried `gemini-2.5-flash` first. The API told new users that model is gone. `gemini-3.8-flash` then returned 503 because of demand. Listing the models this key can call, and sending one short prompt to a few Flash-Lite names, showed that `gemini-3.5-flash-lite` answers in a few seconds. It is a free-tier model, which is enough for a help desk that only has to pick a tool and quote the result. The client is created with `max_retries=0`, so a rate-limit error reaches the evaluation script instead of being retried in a tight loop.
 
 ## How the agent works
 
@@ -105,4 +133,4 @@ Refund percentages live in Python. If `cancellations.md` changed the bands and t
 
 I would add the deterministic judge from the section above, then `opening_hours`, and only then try a second model as a reviser that may not change amounts. I would also give the Gemini client a request timeout so a quiet connection fails in seconds.
 
-GitHub Actions runs `docker compose build` and `docker compose run --rm -T test` on every push and pull request. The workflow does not call the model. A second evaluation column for another model, using the same question file, would make a comparison the score and the failure notes rather than a general impression.
+A second evaluation column for another model, using the same question file, would make a comparison the score and the failure notes rather than a general impression.

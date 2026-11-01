@@ -140,6 +140,17 @@ def test_voucher_refund_is_not_cash(
     assert "new voucher for 73.00 EUR, not cash" in result
 
 
+def test_card_refund_returns_to_the_same_card(
+    now: datetime,
+    bookings_path: Path,
+    policies_dir: Path,
+) -> None:
+    """A card payment goes back to that card within five working days."""
+    result = calculate_refund("CW-1002", now, bookings_path, policies_dir)
+
+    assert "Paid with card: the refund goes back to the same card within 5 working days." in result
+
+
 def test_refund_uses_the_fixed_shop_clock_by_default(
     bookings_path: Path,
     policies_dir: Path,
