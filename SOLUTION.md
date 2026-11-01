@@ -105,4 +105,4 @@ Refund percentages live in Python. If `cancellations.md` changed the bands and t
 
 I would add the deterministic judge from the section above, then `opening_hours`, and only then try a second model as a reviser that may not change amounts. I would also give the Gemini client a request timeout so a quiet connection fails in seconds.
 
-With more time I would add a GitHub Actions workflow that runs `docker compose run --rm test` on every push, and a second evaluation column for another model, using the same question file, so the comparison is the score and the failure notes rather than a general impression.
+GitHub Actions runs `docker compose build` and `docker compose run --rm -T test` on every push and pull request. The workflow does not call the model. A second evaluation column for another model, using the same question file, would make a comparison the score and the failure notes rather than a general impression.
