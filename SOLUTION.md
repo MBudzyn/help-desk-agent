@@ -2,6 +2,25 @@
 
 ## Setup
 
+### What you need
+
+Install Docker with Compose v2. On Windows or macOS that is Docker Desktop. You do not install Python, pip, or the libraries yourself. The image installs them.
+
+From the repository root, tests run with no key. The agent and the evaluation need a local `.env`, which git does not track:
+
+```bash
+cp .env.example .env
+```
+
+On Windows PowerShell use `Copy-Item .env.example .env`. Then set the two values, with no quotes:
+
+```text
+GOOGLE_API_KEY=your key from Google AI Studio
+MODEL_NAME=gemini-3.5-flash-lite
+```
+
+Both the `agent` and `eval` services read that file. A missing value stops the process with a message before it calls Gemini.
+
 ### Why Docker
 
 The project runs in Docker so the same build works on a Windows machine and in GitHub Actions. The image is Python 3.12. Tests do not depend on a virtual environment installed on the host, and the host clock is never the shop clock.
@@ -17,9 +36,9 @@ docker compose run --rm test
 docker compose run --rm eval
 ```
 
-`docker compose build` is required after a change under `src/`. The Dockerfile copies the source before it installs the package, so a source change rebuilds that layer. Paths passed to `pytest` inside the container use forward slashes, for example `tests/tools/test_policies.py`.
+Run the commands from the repository root. The same lines work in PowerShell when the question is in double quotes. The first `docker compose build` downloads the Python image and the libraries, so it takes a few minutes. Later builds are shorter. A change under `src/` needs a new build, because the Dockerfile copies the source before it installs the package. Paths passed to `pytest` inside the container use forward slashes, for example `tests/tools/test_policies.py`.
 
-`test` runs `pytest` with no network and no API key. `eval` reads `GOOGLE_API_KEY` and `MODEL_NAME` from `.env`. Copy `.env.example` to `.env` and fill in the values before that run. The real key stays out of git.
+`test` runs `pytest` with no network and no API key. `agent` and `eval` both read `GOOGLE_API_KEY` and `MODEL_NAME` from `.env`.
 
 The evaluation calls the free tier, which allows 15 requests a minute for this model. The script waits 10 seconds between questions and, on HTTP 429, waits 65 seconds and tries the same question again. A full run takes a few minutes. It overwrites `eval/results.md`.
 
