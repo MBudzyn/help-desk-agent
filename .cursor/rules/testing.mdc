@@ -1,0 +1,13 @@
+---
+description: Offline pytest rules for tools and the agent graph
+globs: tests/**/*.py
+alwaysApply: false
+---
+
+# Tests
+
+- One command runs the suite: `pytest`. Tests pass with no network and no API key.
+- Each tool has unit tests, including a missing booking id, corrupt JSON, and an unreadable policy file.
+- `calculate_refund` covers every cancellation rule: 100%, 50%, and 0% of the rental price, the booking fee kept, the deposit returned, and the non-cancellable statuses `in_progress`, `completed`, and `cancelled`. Include the 24-hour and 48-hour boundaries.
+- The graph test uses a fake model, asserts which tool was called, and checks the final answer against that tool result.
+- Build broken fixtures with `tmp_path`. Do not mutate `data/`.

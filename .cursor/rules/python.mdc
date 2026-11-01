@@ -1,0 +1,19 @@
+---
+description: Python typing, money, and file I/O for the help desk agent
+globs: **/*.py
+alwaysApply: false
+---
+
+# Python
+
+- Annotate public functions. Keep the code mypy-clean. Prefer `dataclass` or `TypedDict` over untyped dicts for bookings.
+- Use `decimal.Decimal` for euro amounts and quantize to cents. Do not use `float` for money.
+- Pass data paths and the current time in as arguments so tests do not depend on the process clock or the working directory.
+- Read text with `pathlib.Path` and UTF-8. Catch `OSError` and `json.JSONDecodeError` at the tool boundary and return an explicit error string.
+
+```python
+refund = (rental_price * rate).quantize(Decimal("0.01"))
+```
+
+- Catch specific exceptions. Do not use a bare `except`.
+- Tools stay pure: they read files, compute, and return data. Graph nodes own model calls.

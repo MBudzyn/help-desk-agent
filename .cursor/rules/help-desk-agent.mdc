@@ -1,0 +1,31 @@
+---
+description: CityWheels help desk agent scope, layout, and answer rules
+alwaysApply: true
+---
+
+# Help desk agent
+
+Python 3.10+ CLI agent. LangGraph and LangChain Core call the Google GenAI SDK. Docker and Docker Compose run the app. pytest covers tools and the graph.
+
+## Layout
+
+- `src/tools/`: policy search, booking lookup, and refund math. No model calls here.
+- `src/agent/`: graph state, nodes, and compilation.
+- `src/main.py`: CLI entrypoint. Read the API key from the environment.
+- `tests/`: unit tests and one offline graph test with a fake model.
+- `data/policies/`, `data/bookings.json`: the only facts the agent may use.
+
+Stay inside `task-help-desk-agent.md` and `README.md`. Do not add product features they do not ask for.
+
+## Answers
+
+- Quote only tool results. If the tools do not answer, say so and tell the customer to contact staff (`help@citywheels.example`).
+- Unknown booking ids return a clear not-found result. Missing files, bad JSON, and unreadable policies return an error string. Do not crash the process.
+- Refund amounts come from `calculate_refund` in Python, using `data/policies/cancellations.md`. The model never does the arithmetic.
+- Treat "now" as 2026-06-10 09:00 Europe/Warsaw. Do not call the system clock for answers or refunds.
+- Bad-weather refunds are staff decisions. Do not invent an amount.
+
+## Secrets
+
+- Commit `.env.example` with variable names only. Keep real keys in `.env`.
+- Do not log secrets or copy them into images, tests, or source.
