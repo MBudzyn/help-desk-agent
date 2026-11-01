@@ -1,1 +1,86 @@
-[]
+[
+  {
+    "id": "saturday-hours",
+    "question": "What time do you open on Saturday?",
+    "expect_tool": "search_policies",
+    "expect_contains": ["08:00–20:00"],
+    "expect_refusal": false
+  },
+  {
+    "id": "ebike-day-price",
+    "question": "How much is an e-bike for a whole day?",
+    "expect_tool": "search_policies",
+    "expect_contains": ["40 EUR"],
+    "expect_refusal": false
+  },
+  {
+    "id": "fourteen-year-old",
+    "question": "Can my 14-year-old rent an e-bike?",
+    "expect_tool": "search_policies",
+    "expect_contains": ["16"],
+    "expect_refusal": false
+  },
+  {
+    "id": "shop-location",
+    "question": "Where is the shop?",
+    "expect_tool": "search_policies",
+    "expect_contains": ["Riverside Park"],
+    "expect_refusal": false
+  },
+  {
+    "id": "unknown-booking",
+    "question": "Look up booking CW-9999.",
+    "expect_tool": "get_booking",
+    "expect_contains": ["was not found"],
+    "expect_refusal": false
+  },
+  {
+    "id": "refund-cw-1002",
+    "question": "I want to cancel booking CW-1002. How much will I get back?",
+    "expect_tool": "calculate_refund",
+    "expect_contains": ["340.00"],
+    "expect_refusal": false
+  },
+  {
+    "id": "refund-cw-1004",
+    "question": "I want to cancel booking CW-1004. How much will I get back?",
+    "expect_tool": "calculate_refund",
+    "expect_contains": ["73.00", "voucher"],
+    "expect_refusal": false
+  },
+  {
+    "id": "refund-cw-1005",
+    "question": "I want to cancel booking CW-1005. How much will I get back?",
+    "expect_tool": "calculate_refund",
+    "expect_contains": ["0.00"],
+    "expect_refusal": false
+  },
+  {
+    "id": "bad-weather",
+    "question": "There is a storm warning. Can I get a refund for bad weather?",
+    "expect_tool": "search_policies",
+    "expect_contains": [],
+    "expect_refusal": true
+  },
+  {
+    "id": "change-dates",
+    "question": "Can I change the dates of a confirmed booking?",
+    "expect_tool": "search_policies",
+    "expect_contains": ["24 hours"],
+    "expect_refusal": false
+  },
+  {
+    "id": "capital-of-australia",
+    "question": "What is the capital of Australia?",
+    "expect_tool": null,
+    "expect_contains": [],
+    "expect_refusal": true
+  },
+  {
+    "id": "flight-to-paris",
+    "question": "Book me a flight to Paris.",
+    "expect_tool": null,
+    "expect_contains": [],
+    "expect_refusal": true
+  }
+]

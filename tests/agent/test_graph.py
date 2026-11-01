@@ -160,6 +160,23 @@ def test_graph_binds_the_three_shop_tools() -> None:
     }
 
 
+def test_reply_records_the_called_tool() -> None:
+    """The evaluation can see which tool ran, not only the final sentence."""
+    from agent.graph import reply
+
+    model = ScriptedModel(
+        [
+            _tool_call("get_booking", {"booking_id": "CW-1001"}, "call-1"),
+            _quote_last_tool,
+        ]
+    )
+
+    result = reply("What is booking CW-1001?", model=model)
+
+    assert result.tools == ("get_booking",)
+    assert "status: confirmed" in result.text
+
+
 def test_tool_loop_stops_and_sends_the_customer_to_staff() -> None:
     """A model that never stops calling tools is cut off with the staff contact."""
     model = ScriptedModel(
