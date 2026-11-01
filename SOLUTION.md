@@ -132,9 +132,9 @@ I used Cursor while building this. It drafted tests, the tool functions, the Lan
 
 Two of its outputs were wrong, and the runs showed it.
 
-It told me to set `MODEL_NAME=gemini-2.5-flash`. One real question returned 404: that model is no longer available to new users. The replacement it switched to, `gemini-3.8-flash`, then returned 503 under load. I listed the models on the key and tried a short prompt against Flash-Lite names. `gemini-3.5-flash-lite` answered. The model in `.env` is the one that call succeeded with, not the first name suggested.
+It told me to set `MODEL_NAME=gemini-2.5-flash`. One real question returned 404: that model is no longer available to new users. The replacement it switched to, `gemini-3.8-flash`, then returned 503 under load. I listed the models on the key and tried a short prompt against Flash-Lite names. `gemini-3.5-flash-lite` answered. The model in `.env` is the one that answered, not the first name suggested.
 
-The prompt edit it wrote for the first evaluation also caused the second failure above. Telling the model, in the instructions, that bad weather is a staff decision made the following run skip `search_policies`. I saw that in `eval/results.md`: the answer was right, and the tool list was empty. The scorer's demand for the exact string `08:00–20:00` has the same shape. The Saturday answer contained both times, and the test still failed because the dash was a word.
+The prompt edit it wrote for the first evaluation also caused the second failure above. Telling the model, in the instructions, that bad weather is a staff decision made the following run skip `search_policies`. I saw that in `eval/results.md`: the answer was right, and the tool list was empty. The Saturday check has the same shape. The answer contained both times, and it still failed because the model wrote "to" instead of the en dash in `08:00–20:00`.
 
 ## Limitations
 
