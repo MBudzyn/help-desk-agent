@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "citywheels-help-desk"
+version = "0.1.0"
+description = "Command-line help desk agent for the CityWheels bike rental shop."
+requires-python = ">=3.10"
+dependencies = [
+    "langgraph",
+    "langchain-core",
+    "langchain-google-genai",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "mypy",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["tools", "agent"]
+py-modules = ["main", "config"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+mypy_path = "src"
+files = ["src", "tests", "eval/run_eval.py"]

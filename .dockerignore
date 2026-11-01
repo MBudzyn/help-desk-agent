@@ -1,0 +1,14 @@
+.git
+.cursor
+.venv
+venv
+env
+__pycache__
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+.env
+task-help-desk-agent.md
+*.egg-info
