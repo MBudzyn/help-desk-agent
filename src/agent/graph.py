@@ -1,6 +1,7 @@
 """One tool-calling loop: the model chooses a tool, the code runs it, and the result comes back."""
 
 import os
+from dataclasses import dataclass
 from typing import Any
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
@@ -39,11 +40,30 @@ def build_graph(model: Any) -> Any:
     return graph.compile()
 
 
+@dataclass(frozen=True)
+class AgentReply:
+    """Final text plus the names of the tools that actually ran."""
+
+    text: str
+    tools: tuple[str, ...]
+
+
 def answer(question: str, model: Any | None = None) -> str:
     """Run one question through the agent and return its final text."""
+    return reply(question, model=model).text
+
+
+def reply(question: str, model: Any | None = None) -> AgentReply:
+    """Run one question and keep the tool names for the evaluation."""
     graph = build_graph(model if model is not None else _real_model())
     state = graph.invoke({"messages": [_customer_message(question)]})
-    return _message_text(state["messages"][-1])
+    messages = state["messages"]
+    tools = tuple(
+        message.name
+        for message in messages
+        if isinstance(message, ToolMessage) and isinstance(message.name, str) and message.name != ""
+    )
+    return AgentReply(text=_message_text(messages[-1]), tools=tools)
 
 
 def _real_model() -> Any:
@@ -53,7 +73,7 @@ def _real_model() -> Any:
         raise RuntimeError("GOOGLE_API_KEY and MODEL_NAME must be set")
     from langchain_google_genai import ChatGoogleGenerativeAI
 
-    return ChatGoogleGenerativeAI(model=name, google_api_key=key)
+    return ChatGoogleGenerativeAI(model=name, google_api_key=key, max_retries=0)
 
 
 def _customer_message(question: str) -> HumanMessage:
